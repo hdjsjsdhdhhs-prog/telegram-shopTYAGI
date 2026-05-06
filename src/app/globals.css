@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Telegram-mini-app inspired dark palette. */
+  --tg-bg: #0f1115;
+  --tg-bg-2: #161a21;
+  --tg-bg-3: #1f2530;
+  --tg-text: #f5f7fb;
+  --tg-text-muted: #8b95a7;
+  --tg-accent: #3b82f6;
+  --tg-accent-hover: #2563eb;
+  --tg-success: #34c759;
+  --tg-danger: #ef4444;
+  --tg-border: rgba(255, 255, 255, 0.06);
+}
+
+html,
+body {
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "SF Pro Text", "SF Pro Display", sans-serif;
+  min-height: 100dvh;
+}
+
+/* Hide scrollbars on horizontally scrolling chip rows. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Smooth fade-up for page transitions. */
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 220ms ease-out both;
+}
+
+/* Buttons reused across the app. */
+.btn-primary {
+  @apply inline-flex items-center justify-center w-full rounded-2xl bg-blue-500 px-5 py-4 text-base font-semibold text-white transition-colors active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+}
+.btn-primary:hover {
+  background: var(--tg-accent-hover);
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center w-full rounded-2xl bg-[color:var(--tg-bg-3)] px-5 py-4 text-base font-semibold text-white transition-colors active:scale-[0.98] disabled:opacity-50;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm text-[color:var(--tg-text-muted)] hover:text-white transition-colors;
+}
+
+.card {
+  @apply rounded-2xl bg-[color:var(--tg-bg-2)] border border-white/5;
+}
+
+.input {
+  @apply w-full rounded-xl bg-[color:var(--tg-bg-3)] border border-white/5 px-4 py-3 text-[color:var(--tg-text)] placeholder:text-[color:var(--tg-text-muted)] focus:outline-none focus:ring-2 focus:ring-blue-500/40;
+}
