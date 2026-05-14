@@ -57,6 +57,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, hydrated]);
 
+  const itemIds = useMemo(() => items.map((item) => item.id).sort().join(","), [items]);
+
+  useEffect(() => {
+    if (!hydrated || !itemIds) return;
+
+    let cancelled = false;
+    fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: itemIds.split(",") }),
+    })
+      .then((res) => (res.ok ? res.json() : { products: [] }))
+      .then((json) => {
+        if (cancelled) return;
+        const products = new Map(
+          (
+            (json.products ?? []) as {
+              id: string;
+              name: string;
+              price: number;
+              currency: string;
+              imageUrl?: string | null;
+            }[]
+          ).map((product) => [product.id, product]),
+        );
+
+        setItems((prev) =>
+          prev.flatMap((item) => {
+            const product = products.get(item.id);
+            if (!product) return [];
+
+            return [{
+              ...item,
+              name: product.name,
+              price: product.price,
+              currency: product.currency,
+              imageUrl: product.imageUrl ?? null,
+            }];
+          }),
+        );
+      })
+      .catch(() => {
+        // Keep the local cart if the refresh fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, itemIds]);
+
   const add: CartContextValue["add"] = useCallback((item, qty = 1) => {
     setItems((prev) => {
       const existing = prev.find((p) => p.id === item.id);

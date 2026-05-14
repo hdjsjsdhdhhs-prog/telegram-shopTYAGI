@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { formatPrice } from "@/lib/format";
+import { getProductDisplayPrice, getProductOldPrice } from "@/lib/pricing";
 
 interface Category {
   id: string;
@@ -13,6 +14,10 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  oldPrice: number | null;
+  salePrice: number | null;
+  saleBadge: string | null;
+  isSale: boolean;
   currency: string;
   imageUrl: string | null;
   inStock: boolean;
@@ -68,26 +73,38 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
-          {products.map((p) => (
-            <li key={p.id} className="card flex items-center gap-3 p-3">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[color:var(--tg-bg-3)]">
-                {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{p.name}</div>
-                <div className="text-xs text-[color:var(--tg-text-muted)]">
-                  {p.category?.name ?? "—"} · {formatPrice(p.price, p.currency)}
-                  {!p.inStock ? " · нет в наличии" : ""}
+          {products.map((p) => {
+            const oldPrice = getProductOldPrice(p);
+
+            return (
+              <li key={p.id} className="card flex items-center gap-3 p-3">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-[color:var(--tg-bg-3)]">
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                  ) : null}
                 </div>
-              </div>
-              <button onClick={() => setEditing(p)} className="btn-ghost">
-                Редактировать
-              </button>
-            </li>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{p.name}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[color:var(--tg-text-muted)]">
+                    <span>{p.category?.name ?? "—"}</span>
+                    <span>·</span>
+                    <span>{formatPrice(getProductDisplayPrice(p), p.currency)}</span>
+                    {oldPrice ? <span className="line-through">{formatPrice(oldPrice, p.currency)}</span> : null}
+                    {p.isSale ? (
+                      <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-medium text-rose-300">
+                        Распродажа
+                      </span>
+                    ) : null}
+                    {!p.inStock ? <span>· нет в наличии</span> : null}
+                  </div>
+                </div>
+                <button onClick={() => setEditing(p)} className="btn-ghost">
+                  Редактировать
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -126,6 +143,14 @@ function ProductEditor({
   const [priceMajor, setPriceMajor] = useState(
     initial ? (initial.price / 100).toString() : "",
   );
+  const [oldPriceMajor, setOldPriceMajor] = useState(
+    initial?.oldPrice != null ? (initial.oldPrice / 100).toString() : "",
+  );
+  const [salePriceMajor, setSalePriceMajor] = useState(
+    initial?.salePrice != null ? (initial.salePrice / 100).toString() : "",
+  );
+  const [saleBadge, setSaleBadge] = useState(initial?.saleBadge ?? "");
+  const [isSale, setIsSale] = useState(initial?.isSale ?? false);
   const [currency, setCurrency] = useState(initial?.currency ?? "RUB");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? "");
@@ -133,11 +158,32 @@ function ProductEditor({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const parseOptionalPrice = (value: string, label: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const priceNumber = Math.round(Number(trimmed) * 100);
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      throw new Error(`Некорректная цена: ${label}`);
+    }
+
+    return priceNumber;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const priceNumber = Math.round(Number(priceMajor) * 100);
     if (!Number.isFinite(priceNumber) || priceNumber < 0) {
       setError("Некорректная цена");
+      return;
+    }
+    let oldPriceNumber: number | null = null;
+    let salePriceNumber: number | null = null;
+    try {
+      oldPriceNumber = parseOptionalPrice(oldPriceMajor, "старая цена");
+      salePriceNumber = parseOptionalPrice(salePriceMajor, "цена со скидкой");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Некорректная цена");
       return;
     }
     if (!categoryId) {
@@ -158,6 +204,10 @@ function ProductEditor({
           name,
           description: description || null,
           price: priceNumber,
+          oldPrice: oldPriceNumber,
+          salePrice: salePriceNumber,
+          saleBadge: saleBadge.trim() || null,
+          isSale,
           currency,
           imageUrl: imageUrl || null,
           categoryId,
@@ -225,6 +275,55 @@ function ProductEditor({
             </select>
           </Field>
         </div>
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--tg-bg-3)] px-3 py-3">
+          <span>
+            <span className="block text-sm">Sale / Распродажа</span>
+            <span className="block text-xs text-[color:var(--tg-text-muted)]">
+              Показывать товар в разделе «Распродажа»
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={isSale}
+            onChange={(e) => setIsSale(e.target.checked)}
+            className="h-5 w-5 shrink-0 accent-rose-500"
+          />
+        </label>
+        {isSale ? (
+          <div className="space-y-3 rounded-xl bg-[color:var(--tg-bg-3)] p-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Старая цена">
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={oldPriceMajor}
+                  onChange={(e) => setOldPriceMajor(e.target.value)}
+                />
+              </Field>
+              <Field label="Цена со скидкой">
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={salePriceMajor}
+                  onChange={(e) => setSalePriceMajor(e.target.value)}
+                />
+              </Field>
+            </div>
+            <Field label="Бейдж распродажи">
+              <input
+                className="input"
+                maxLength={40}
+                placeholder="Sale"
+                value={saleBadge}
+                onChange={(e) => setSaleBadge(e.target.value)}
+              />
+            </Field>
+          </div>
+        ) : null}
         <Field label="Категория">
           <select
             className="input"

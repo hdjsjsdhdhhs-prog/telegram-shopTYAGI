@@ -6,10 +6,11 @@ import { Header } from "@/components/Header";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [categories, products] = await Promise.all([
+  const [categories, saleProducts] = await Promise.all([
     prisma.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
+      where: { isSale: true },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: 24,
     }),
   ]);
@@ -34,21 +35,25 @@ export default async function HomePage() {
 
         <section className="mt-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-[color:var(--tg-text-muted)]">
-            Новинки
+            Распродажа
           </h2>
-          {products.length === 0 ? (
+          {saleProducts.length === 0 ? (
             <div className="card mt-2 p-6 text-center text-sm text-[color:var(--tg-text-muted)]">
-              Пока нет товаров. Добавьте их в админ-панели.
+              Пока нет товаров в распродаже.
             </div>
           ) : (
             <div className="mt-2 grid grid-cols-2 gap-3">
-              {products.map((p) => (
+              {saleProducts.map((p) => (
                 <ProductCard
                   key={p.id}
                   product={{
                     id: p.id,
                     name: p.name,
                     price: p.price,
+                    oldPrice: p.oldPrice,
+                    salePrice: p.salePrice,
+                    saleBadge: p.saleBadge,
+                    isSale: p.isSale,
                     currency: p.currency,
                     imageUrl: p.imageUrl,
                     inStock: p.inStock,

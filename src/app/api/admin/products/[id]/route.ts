@@ -7,6 +7,10 @@ const UpdateBody = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().max(5000).nullable().optional(),
   price: z.number().int().min(0).max(100_000_000).optional(),
+  oldPrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  salePrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  saleBadge: z.string().trim().max(40).nullable().optional(),
+  isSale: z.boolean().optional(),
   currency: z.string().trim().min(1).max(8).optional(),
   imageUrl: z.string().trim().max(2048).nullable().optional(),
   categoryId: z.string().trim().min(1).optional(),
@@ -35,9 +39,13 @@ export async function PATCH(
     }
   }
   try {
+    const data = { ...parsed.data };
+    if ("saleBadge" in data) {
+      data.saleBadge = data.saleBadge || null;
+    }
     const updated = await prisma.product.update({
       where: { id },
-      data: parsed.data,
+      data,
     });
     return NextResponse.json({ product: updated });
   } catch {

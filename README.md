@@ -97,7 +97,7 @@ tg-mini-shop/
 ```prisma
 User       (telegramId @unique, username, firstName, ...)
 Category   (slug @unique, imageUrl, sortOrder)
-Product    (price [int, minor units], currency, imageUrl, categoryId, inStock)
+Product    (price/oldPrice/salePrice [int, minor units], saleBadge, isSale, currency, imageUrl, categoryId, inStock)
 Order      (userId, status, paymentMethod, deliveryMethod, address, comment, total)
 OrderItem  (orderId, productId, productName [snapshot], unitPrice [snapshot], quantity)
 Favorite   (userId, productId @@unique)

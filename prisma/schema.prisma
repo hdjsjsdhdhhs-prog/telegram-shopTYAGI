@@ -42,6 +42,10 @@ model Product {
   name        String
   description String?
   price       Int      // stored in minor units (cents/kopecks) for safety
+  oldPrice    Int?
+  salePrice   Int?
+  saleBadge   String?
+  isSale      Boolean  @default(false)
   currency    String   @default("RUB")
   imageUrl    String?
   inStock     Boolean  @default(true)
@@ -54,6 +58,7 @@ model Product {
   favorites   Favorite[]
 
   @@index([categoryId])
+  @@index([isSale])
 }
 
 enum OrderStatus {

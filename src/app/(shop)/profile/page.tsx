@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { useTelegram, useTelegramHeaders } from "@/components/TelegramProvider";
 import { formatPrice } from "@/lib/format";
+import { getProductDisplayPrice, getProductOldPrice, getProductSaleBadge } from "@/lib/pricing";
 
 interface OrderSummary {
   id: string;
@@ -19,6 +20,10 @@ interface FavoriteSummary {
   id: string;
   name: string;
   price: number;
+  oldPrice: number | null;
+  salePrice: number | null;
+  saleBadge: string | null;
+  isSale: boolean;
   currency: string;
   imageUrl: string | null;
 }
@@ -159,21 +164,38 @@ function FavoritesList({ favorites }: { favorites: FavoriteSummary[] | null }) {
   }
   return (
     <div className="grid grid-cols-2 gap-3">
-      {favorites.map((p) => (
-        <Link href={`/product/${p.id}`} key={p.id} className="card overflow-hidden">
-          <div className="relative aspect-square w-full bg-[color:var(--tg-bg-3)]">
-            {p.imageUrl ? (
-              <Image src={p.imageUrl} alt={p.name} fill sizes="50vw" className="object-cover" unoptimized />
-            ) : null}
-          </div>
-          <div className="p-3">
-            <div className="line-clamp-2 text-sm">{p.name}</div>
-            <div className="mt-1 text-base font-semibold">
-              {formatPrice(p.price, p.currency)}
+      {favorites.map((p) => {
+        const oldPrice = getProductOldPrice(p);
+        const saleBadge = getProductSaleBadge(p);
+
+        return (
+          <Link href={`/product/${p.id}`} key={p.id} className="card overflow-hidden">
+            <div className="relative aspect-square w-full bg-[color:var(--tg-bg-3)]">
+              {p.imageUrl ? (
+                <Image src={p.imageUrl} alt={p.name} fill sizes="50vw" className="object-cover" unoptimized />
+              ) : null}
+              {saleBadge ? (
+                <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-full bg-rose-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  {saleBadge}
+                </span>
+              ) : null}
             </div>
-          </div>
-        </Link>
-      ))}
+            <div className="p-3">
+              <div className="line-clamp-2 text-sm">{p.name}</div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className={`text-base font-semibold ${p.isSale && p.salePrice != null ? "text-rose-300" : ""}`}>
+                  {formatPrice(getProductDisplayPrice(p), p.currency)}
+                </span>
+                {oldPrice ? (
+                  <span className="text-xs text-[color:var(--tg-text-muted)] line-through">
+                    {formatPrice(oldPrice, p.currency)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }

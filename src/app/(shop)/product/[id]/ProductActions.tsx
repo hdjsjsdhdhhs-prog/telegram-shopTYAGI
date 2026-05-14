@@ -4,12 +4,17 @@ import { useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import { useTelegram, useTelegramHeaders } from "@/components/TelegramProvider";
 import { useFavorite } from "@/components/useFavorite";
+import { getProductDisplayPrice } from "@/lib/pricing";
 
 interface Props {
   product: {
     id: string;
     name: string;
     price: number;
+    oldPrice?: number | null;
+    salePrice?: number | null;
+    saleBadge?: string | null;
+    isSale?: boolean | null;
     currency: string;
     imageUrl?: string | null;
     inStock: boolean;
@@ -22,6 +27,7 @@ export function ProductActions({ product }: Props) {
   const headers = useTelegramHeaders();
   const { isFavorite, toggle, loading: favLoading } = useFavorite(product.id, headers, ready);
   const [added, setAdded] = useState(false);
+  const displayPrice = getProductDisplayPrice(product);
 
   return (
     <div className="flex items-center gap-3">
@@ -46,7 +52,7 @@ export function ProductActions({ product }: Props) {
           add({
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: displayPrice,
             currency: product.currency,
             imageUrl: product.imageUrl ?? null,
           });

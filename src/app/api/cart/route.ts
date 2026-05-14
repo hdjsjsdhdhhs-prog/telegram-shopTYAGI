@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getProductDisplayPrice } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -23,5 +24,10 @@ export async function POST(req: Request) {
   const products = await prisma.product.findMany({
     where: { id: { in: parsed.data.ids } },
   });
-  return NextResponse.json({ products });
+  return NextResponse.json({
+    products: products.map((product) => ({
+      ...product,
+      price: getProductDisplayPrice(product),
+    })),
+  });
 }

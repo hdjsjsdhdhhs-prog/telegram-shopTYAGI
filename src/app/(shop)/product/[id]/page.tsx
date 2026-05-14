@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/Header";
 import { formatPrice } from "@/lib/format";
+import { getProductDisplayPrice, getProductOldPrice, getProductSaleBadge } from "@/lib/pricing";
 import { ProductActions } from "./ProductActions";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,10 @@ export default async function ProductPage({
     include: { category: true },
   });
   if (!product) notFound();
+
+  const displayPrice = getProductDisplayPrice(product);
+  const oldPrice = getProductOldPrice(product);
+  const saleBadge = getProductSaleBadge(product);
 
   return (
     <>
@@ -46,14 +51,26 @@ export default async function ProductPage({
             )}
           </div>
           <div className="p-4">
-            <div className="text-xs text-[color:var(--tg-text-muted)]">
-              {product.category.name}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--tg-text-muted)]">
+              <span>{product.category.name}</span>
+              {saleBadge ? (
+                <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-semibold uppercase tracking-wide text-rose-300">
+                  {saleBadge}
+                </span>
+              ) : null}
             </div>
             <h1 className="mt-1 text-xl font-semibold leading-tight">
               {product.name}
             </h1>
-            <div className="mt-3 text-2xl font-bold">
-              {formatPrice(product.price, product.currency)}
+            <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className={`text-2xl font-bold ${product.isSale && product.salePrice != null ? "text-rose-300" : ""}`}>
+                {formatPrice(displayPrice, product.currency)}
+              </span>
+              {oldPrice ? (
+                <span className="text-sm text-[color:var(--tg-text-muted)] line-through">
+                  {formatPrice(oldPrice, product.currency)}
+                </span>
+              ) : null}
             </div>
             {product.description ? (
               <p className="mt-3 whitespace-pre-line text-sm text-[color:var(--tg-text-muted)]">
@@ -69,6 +86,10 @@ export default async function ProductPage({
               id: product.id,
               name: product.name,
               price: product.price,
+              oldPrice: product.oldPrice,
+              salePrice: product.salePrice,
+              saleBadge: product.saleBadge,
+              isSale: product.isSale,
               currency: product.currency,
               imageUrl: product.imageUrl,
               inStock: product.inStock,

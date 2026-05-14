@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getTelegramUserFromHeaders } from "@/lib/telegramAuth";
 import { escapeHtml, sendTelegramMessage } from "@/lib/telegram";
 import { formatPrice } from "@/lib/format";
+import { getProductDisplayPrice } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +55,12 @@ export async function POST(req: Request) {
     .map((i) => {
       const p = productMap.get(i.productId);
       if (!p) return null;
-      total += p.price * i.quantity;
+      const unitPrice = getProductDisplayPrice(p);
+      total += unitPrice * i.quantity;
       return {
         productId: p.id,
         productName: p.name,
-        unitPrice: p.price,
+        unitPrice,
         quantity: i.quantity,
       };
     })
