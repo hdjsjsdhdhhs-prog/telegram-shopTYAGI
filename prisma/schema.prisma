@@ -36,7 +36,8 @@ model Product {
   id          String   @id @default(cuid())
   name        String
   description String?
-  price       Int      // stored in minor units (cents/kopecks) for safety
+  price       Int // stored in minor units (cents/kopecks) for safety
+  costPrice   Int      @default(0)
   oldPrice    Int?
   salePrice   Int?
   saleBadge   String?
@@ -48,9 +49,9 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
-  favorites   Favorite[]
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  favorites  Favorite[]
 
   @@index([categoryId])
   @@index([isSale])
@@ -65,7 +66,11 @@ model Order {
   address        String?
   comment        String?
   total          Int
+  revenue        Int            @default(0)
+  cost           Int            @default(0)
+  profit         Int            @default(0)
   currency       String         @default("RUB")
+  completedAt    DateTime?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   user           User           @relation(fields: [userId], references: [id])
@@ -73,17 +78,20 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([completedAt])
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  productId   String
-  productName String
-  unitPrice   Int
-  quantity    Int
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product @relation(fields: [productId], references: [id])
+  id            String  @id @default(cuid())
+  orderId       String
+  productId     String
+  productName   String
+  unitPrice     Int
+  unitSalePrice Int?
+  unitCostPrice Int     @default(0)
+  quantity      Int
+  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
 }
