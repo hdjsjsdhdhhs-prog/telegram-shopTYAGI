@@ -16,6 +16,7 @@ const UpdateBody = z.object({
   imageUrl: z.string().trim().max(2048).nullable().optional(),
   categoryId: z.string().trim().min(1).optional(),
   inStock: z.boolean().optional(),
+  stockQuantity: z.number().int().min(0).max(1_000_000_000).optional(),
 });
 
 export async function PATCH(
@@ -43,6 +44,9 @@ export async function PATCH(
     const data = { ...parsed.data };
     if ("saleBadge" in data) {
       data.saleBadge = data.saleBadge || null;
+    }
+    if ("stockQuantity" in data) {
+      data.inStock = (data.stockQuantity ?? 0) > 0;
     }
     const updated = await prisma.product.update({
       where: { id },

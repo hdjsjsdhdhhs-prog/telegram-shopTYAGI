@@ -18,6 +18,7 @@ export interface ProductCardData {
   currency: string;
   imageUrl?: string | null;
   inStock?: boolean;
+  stockQuantity?: number;
 }
 
 export function ProductCard({ product }: { product: ProductCardData }) {
@@ -27,6 +28,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const displayPrice = getProductDisplayPrice(product);
   const oldPrice = getProductOldPrice(product);
   const saleBadge = getProductSaleBadge(product);
+  const isAvailable =
+    product.stockQuantity == null
+      ? product.inStock !== false
+      : product.stockQuantity > 0;
 
   return (
     <div className="card overflow-hidden flex flex-col animate-fade-up">
@@ -91,14 +96,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               }
             });
           }}
-          disabled={product.inStock === false}
+          disabled={!isAvailable}
           className={`mt-2 inline-flex w-full items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors active:scale-[0.98] ${
             added
               ? "bg-emerald-500 text-white"
               : "bg-[color:var(--tg-bg-3)] text-white hover:bg-blue-500"
           } disabled:opacity-50 disabled:pointer-events-none`}
         >
-          {product.inStock === false
+          {!isAvailable
             ? "Нет в наличии"
             : added
               ? "Добавлено"

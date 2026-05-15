@@ -15,6 +15,7 @@ const publicProductSelect = {
   currency: true,
   imageUrl: true,
   inStock: true,
+  stockQuantity: true,
   categoryId: true,
   createdAt: true,
   updatedAt: true,

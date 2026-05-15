@@ -18,6 +18,7 @@ interface Props {
     currency: string;
     imageUrl?: string | null;
     inStock: boolean;
+    stockQuantity: number;
   };
 }
 
@@ -28,6 +29,7 @@ export function ProductActions({ product }: Props) {
   const { isFavorite, toggle, loading: favLoading } = useFavorite(product.id, headers, ready);
   const [added, setAdded] = useState(false);
   const displayPrice = getProductDisplayPrice(product);
+  const isAvailable = product.stockQuantity > 0;
 
   return (
     <div className="flex items-center gap-3">
@@ -47,7 +49,7 @@ export function ProductActions({ product }: Props) {
         </svg>
       </button>
       <button
-        disabled={!product.inStock}
+        disabled={!isAvailable}
         onClick={() => {
           add({
             id: product.id,
@@ -66,7 +68,11 @@ export function ProductActions({ product }: Props) {
         }}
         className={`btn-primary ${added ? "!bg-emerald-500" : ""}`}
       >
-        {added ? "Добавлено в корзину" : "Добавить в корзину"}
+        {!isAvailable
+          ? "Нет в наличии"
+          : added
+            ? "Добавлено в корзину"
+            : "Добавить в корзину"}
       </button>
     </div>
   );

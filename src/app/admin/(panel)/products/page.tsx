@@ -22,6 +22,7 @@ interface Product {
   currency: string;
   imageUrl: string | null;
   inStock: boolean;
+  stockQuantity: number;
   categoryId: string;
   category?: Category;
 }
@@ -76,6 +77,16 @@ export default function AdminProductsPage() {
         <ul className="grid gap-3 md:grid-cols-2">
           {products.map((p) => {
             const oldPrice = getProductOldPrice(p);
+            const stockBadge =
+              p.stockQuantity <= 0
+                ? {
+                    label: "Нет в наличии",
+                    className: "bg-red-500/15 text-red-300",
+                  }
+                : {
+                    label: "В наличии",
+                    className: "bg-emerald-500/15 text-emerald-300",
+                  };
 
             return (
               <li key={p.id} className="card flex items-center gap-3 p-3">
@@ -93,13 +104,17 @@ export default function AdminProductsPage() {
                     <span>продажа {formatPrice(getProductDisplayPrice(p), p.currency)}</span>
                     <span>·</span>
                     <span>себестоимость {formatPrice(p.costPrice, p.currency)}</span>
+                    <span>·</span>
+                    <span>Stock {p.stockQuantity}</span>
                     {oldPrice ? <span className="line-through">{formatPrice(oldPrice, p.currency)}</span> : null}
                     {p.isSale ? (
                       <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-medium text-rose-300">
                         Распродажа
                       </span>
                     ) : null}
-                    {!p.inStock ? <span>· нет в наличии</span> : null}
+                    <span className={`rounded-full px-2 py-0.5 font-medium ${stockBadge.className}`}>
+                      {stockBadge.label}
+                    </span>
                   </div>
                 </div>
                 <button onClick={() => setEditing(p)} className="btn-ghost">
@@ -160,7 +175,9 @@ function ProductEditor({
   const [currency, setCurrency] = useState(initial?.currency ?? "RUB");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? "");
-  const [inStock, setInStock] = useState(initial?.inStock ?? true);
+  const [stockQuantity, setStockQuantity] = useState(
+    (initial?.stockQuantity ?? 0).toString(),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -186,6 +203,15 @@ function ProductEditor({
     const costPriceNumber = Math.round(Number(costPriceMajor) * 100);
     if (!Number.isFinite(costPriceNumber) || costPriceNumber < 0) {
       setError("Некорректная себестоимость");
+      return;
+    }
+    const stockQuantityNumber = Number(stockQuantity);
+    if (
+      stockQuantity.trim() === "" ||
+      !Number.isInteger(stockQuantityNumber) ||
+      stockQuantityNumber < 0
+    ) {
+      setError("Stock quantity must be 0 or greater");
       return;
     }
     let oldPriceNumber: number | null = null;
@@ -223,7 +249,8 @@ function ProductEditor({
           currency,
           imageUrl: imageUrl || null,
           categoryId,
-          inStock,
+          inStock: stockQuantityNumber > 0,
+          stockQuantity: stockQuantityNumber,
         }),
       });
       if (!res.ok) {
@@ -298,6 +325,18 @@ function ProductEditor({
               <option value="EUR">EUR</option>
             </select>
         </Field>
+        <Field label="Stock quantity">
+          <input
+            className="input"
+            type="number"
+            min={0}
+            step={1}
+            required
+            inputMode="numeric"
+            value={stockQuantity}
+            onChange={(e) => setStockQuantity(e.target.value)}
+          />
+        </Field>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--tg-bg-3)] px-3 py-3">
           <span>
             <span className="block text-sm">Sale / Распродажа</span>
@@ -364,15 +403,6 @@ function ProductEditor({
         <Field label="Изображение">
           <ImageUpload value={imageUrl} onChange={setImageUrl} />
         </Field>
-        <label className="flex items-center justify-between rounded-xl bg-[color:var(--tg-bg-3)] px-3 py-3">
-          <span className="text-sm">В наличии</span>
-          <input
-            type="checkbox"
-            checked={inStock}
-            onChange={(e) => setInStock(e.target.checked)}
-            className="h-5 w-5 accent-blue-500"
-          />
-        </label>
         {error ? <div className="text-sm text-rose-400">{error}</div> : null}
         <div className="flex gap-2 pt-2">
           {initial && (

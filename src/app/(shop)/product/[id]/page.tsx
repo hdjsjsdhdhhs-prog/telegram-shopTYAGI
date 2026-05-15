@@ -23,6 +23,7 @@ export default async function ProductPage({
   const displayPrice = getProductDisplayPrice(product);
   const oldPrice = getProductOldPrice(product);
   const saleBadge = getProductSaleBadge(product);
+  const isAvailable = product.stockQuantity > 0;
 
   return (
     <>
@@ -56,6 +57,11 @@ export default async function ProductPage({
               {saleBadge ? (
                 <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-semibold uppercase tracking-wide text-rose-300">
                   {saleBadge}
+                </span>
+              ) : null}
+              {!isAvailable ? (
+                <span className="rounded-full bg-red-500/15 px-2 py-0.5 font-semibold uppercase tracking-wide text-red-300">
+                  Нет в наличии
                 </span>
               ) : null}
             </div>
@@ -93,6 +99,7 @@ export default async function ProductPage({
               currency: product.currency,
               imageUrl: product.imageUrl,
               inStock: product.inStock,
+              stockQuantity: product.stockQuantity,
             }}
           />
         </div>

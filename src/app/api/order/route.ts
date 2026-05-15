@@ -24,6 +24,26 @@ const OrderInput = z.object({
   comment: z.string().trim().max(1000).nullable().optional(),
 });
 
+function aggregateItems(items: z.infer<typeof OrderInput>["items"]) {
+  const byProduct = new Map<string, number>();
+
+  for (const item of items) {
+    byProduct.set(
+      item.productId,
+      (byProduct.get(item.productId) ?? 0) + item.quantity,
+    );
+  }
+
+  return Array.from(byProduct.entries()).map(([productId, quantity]) => ({
+    productId,
+    quantity,
+  }));
+}
+
+function insufficientStockMessage(productName: string, available: number, requested: number) {
+  return `Недостаточно товара "${productName}" на складе. Доступно: ${available}, в заказе: ${requested}.`;
+}
+
 export async function POST(req: Request) {
   const user = await getTelegramUserFromHeaders();
   if (!user) {
@@ -43,15 +63,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "address_required" }, { status: 400 });
   }
 
-  const ids = parsed.data.items.map((i) => i.productId);
+  const requestedItems = aggregateItems(parsed.data.items);
+  const ids = requestedItems.map((i) => i.productId);
   const products = await prisma.product.findMany({ where: { id: { in: ids } } });
-  if (products.length === 0) {
-    return NextResponse.json({ error: "no_products" }, { status: 400 });
+  if (products.length !== ids.length) {
+    return NextResponse.json(
+      { error: "Один из товаров больше недоступен." },
+      { status: 400 },
+    );
   }
   const productMap = new Map(products.map((p) => [p.id, p]));
 
+  for (const item of requestedItems) {
+    const product = productMap.get(item.productId);
+    if (!product || product.stockQuantity < item.quantity) {
+      return NextResponse.json(
+        {
+          error: insufficientStockMessage(
+            product?.name ?? "Товар",
+            product?.stockQuantity ?? 0,
+            item.quantity,
+          ),
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   let total = 0;
-  const itemsCreate = parsed.data.items
+  const itemsCreate = requestedItems
     .map((i) => {
       const p = productMap.get(i.productId);
       if (!p) return null;

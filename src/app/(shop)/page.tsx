@@ -9,7 +9,7 @@ export default async function HomePage() {
   const [categories, saleProducts] = await Promise.all([
     prisma.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     prisma.product.findMany({
-      where: { isSale: true },
+      where: { isSale: true, stockQuantity: { gt: 0 } },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: 24,
     }),
@@ -57,6 +57,7 @@ export default async function HomePage() {
                     currency: p.currency,
                     imageUrl: p.imageUrl,
                     inStock: p.inStock,
+                    stockQuantity: p.stockQuantity,
                   }}
                 />
               ))}

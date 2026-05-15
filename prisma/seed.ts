@@ -99,6 +99,8 @@ async function main() {
         isSale: p.isSale ?? false,
         currency: "RUB",
         imageUrl: p.imageUrl,
+        inStock: true,
+        stockQuantity: 20,
         categoryId,
       },
     });

@@ -16,6 +16,7 @@ const cartProductSelect = {
   currency: true,
   imageUrl: true,
   inStock: true,
+  stockQuantity: true,
 };
 
 const Body = z.object({
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
   const products = await prisma.product.findMany({
-    where: { id: { in: parsed.data.ids } },
+    where: { id: { in: parsed.data.ids }, stockQuantity: { gt: 0 } },
     select: cartProductSelect,
   });
   return NextResponse.json({

@@ -14,7 +14,10 @@ export default async function CategoryPage({
   const category = await prisma.category.findUnique({
     where: { id },
     include: {
-      products: { orderBy: { createdAt: "desc" } },
+      products: {
+        where: { stockQuantity: { gt: 0 } },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
   if (!category) notFound();
@@ -43,6 +46,7 @@ export default async function CategoryPage({
                   currency: p.currency,
                   imageUrl: p.imageUrl,
                   inStock: p.inStock,
+                  stockQuantity: p.stockQuantity,
                 }}
               />
             ))}

@@ -68,6 +68,7 @@ function AdminOrdersInner() {
   const initialStatus = params.get("status");
   const [status, setStatus] = useState<string | null>(initialStatus);
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
     const url = status ? `/api/admin/orders?status=${status}` : `/api/admin/orders`;
@@ -81,15 +82,19 @@ function AdminOrdersInner() {
   }, [status]);
 
   const setOrderStatus = async (id: string, next: Order["status"]) => {
+    setError(null);
     const res = await fetch(`/api/admin/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: next }),
     });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (res.ok) {
       setOrders(
         (prev) => prev?.map((o) => (o.id === id ? { ...o, status: next } : o)) ?? null,
       );
+    } else {
+      setError(json.error || "Не удалось изменить статус заказа");
     }
   };
 
@@ -97,6 +102,7 @@ function AdminOrdersInner() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Заказы</h1>
       <StatusFilter current={status} onChange={setStatus} />
+      {error ? <div className="card p-3 text-sm text-rose-400">{error}</div> : null}
       {orders === null ? (
         <div className="card h-24 animate-pulse" />
       ) : orders.length === 0 ? (

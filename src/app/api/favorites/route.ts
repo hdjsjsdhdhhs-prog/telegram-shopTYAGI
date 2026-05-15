@@ -8,7 +8,7 @@ export async function GET() {
   const user = await getTelegramUserFromHeaders();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const favs = await prisma.favorite.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, product: { stockQuantity: { gt: 0 } } },
     orderBy: { createdAt: "desc" },
     include: { product: true },
   });
@@ -23,6 +23,7 @@ export async function GET() {
       isSale: f.product.isSale,
       currency: f.product.currency,
       imageUrl: f.product.imageUrl,
+      stockQuantity: f.product.stockQuantity,
     })),
   });
 }

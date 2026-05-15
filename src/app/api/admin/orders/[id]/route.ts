@@ -12,6 +12,28 @@ const Body = z.object({
   ),
 });
 
+class InsufficientStockError extends Error {}
+
+function aggregateOrderItems(
+  items: { productId: string; productName: string; quantity: number }[],
+) {
+  const byProduct = new Map<
+    string,
+    { productId: string; productName: string; quantity: number }
+  >();
+
+  for (const item of items) {
+    const existing = byProduct.get(item.productId);
+    byProduct.set(item.productId, {
+      productId: item.productId,
+      productName: existing?.productName ?? item.productName,
+      quantity: (existing?.quantity ?? 0) + item.quantity,
+    });
+  }
+
+  return Array.from(byProduct.values());
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -25,40 +47,98 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
-  const current = await prisma.order.findUnique({
-    where: { id },
-    include: { items: true },
-  });
-  if (!current) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
-  }
-
-  const financials = calculateOrderFinancials(current.items);
-  const data =
-    parsed.data.status === "COMPLETED"
-      ? {
-          status: parsed.data.status,
-          revenue: financials.revenue,
-          cost: financials.cost,
-          profit: financials.profit,
-          completedAt: new Date(),
-        }
-      : {
-          status: parsed.data.status,
-          revenue: 0,
-          cost: 0,
-          profit: 0,
-          completedAt: null,
-        };
 
   let order;
   try {
-    order = await prisma.order.update({
-      where: { id },
-      data,
-      include: { user: true },
+    order = await prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id },
+        include: { items: true },
+      });
+      if (!current) {
+        return null;
+      }
+
+      const nextStatus = parsed.data.status;
+      const isCompleting =
+        nextStatus === "COMPLETED" && current.status !== "COMPLETED";
+      const isUndoingCompletion =
+        nextStatus !== "COMPLETED" && current.status === "COMPLETED";
+      const orderItems = aggregateOrderItems(current.items);
+
+      if (isCompleting) {
+        for (const item of orderItems) {
+          const updated = await tx.product.updateMany({
+            where: {
+              id: item.productId,
+              stockQuantity: { gte: item.quantity },
+            },
+            data: {
+              stockQuantity: { decrement: item.quantity },
+              inStock: true,
+            },
+          });
+
+          if (updated.count !== 1) {
+            const product = await tx.product.findUnique({
+              where: { id: item.productId },
+              select: { stockQuantity: true },
+            });
+            throw new InsufficientStockError(
+              `Недостаточно товара "${item.productName}" на складе. Доступно: ${product?.stockQuantity ?? 0}, в заказе: ${item.quantity}.`,
+            );
+          }
+
+          await tx.product.updateMany({
+            where: { id: item.productId, stockQuantity: 0 },
+            data: { inStock: false },
+          });
+        }
+      }
+
+      if (isUndoingCompletion) {
+        for (const item of orderItems) {
+          await tx.product.updateMany({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: { increment: item.quantity },
+              inStock: true,
+            },
+          });
+        }
+      }
+
+      const financials = calculateOrderFinancials(current.items);
+      const data =
+        nextStatus === "COMPLETED"
+          ? {
+              status: nextStatus,
+              revenue: financials.revenue,
+              cost: financials.cost,
+              profit: financials.profit,
+              completedAt: current.completedAt ?? new Date(),
+            }
+          : {
+              status: nextStatus,
+              revenue: 0,
+              cost: 0,
+              profit: 0,
+              completedAt: null,
+            };
+
+      return tx.order.update({
+        where: { id },
+        data,
+        include: { user: true },
+      });
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof InsufficientStockError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  if (!order) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 

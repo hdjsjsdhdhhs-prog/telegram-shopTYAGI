@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ const publicProductSelect = {
   currency: true,
   imageUrl: true,
   inStock: true,
+  stockQuantity: true,
   categoryId: true,
   createdAt: true,
   updatedAt: true,
@@ -26,14 +28,24 @@ export async function GET(req: Request) {
   const ids = url.searchParams.get("ids");
   const saleParam = url.searchParams.get("sale");
   const saleOnly = saleParam === "1" || saleParam === "true";
+  const query = url.searchParams.get("q")?.trim();
 
-  const where = ids
-    ? { id: { in: ids.split(",").filter(Boolean) } }
-    : categoryId
-      ? { categoryId, ...(saleOnly ? { isSale: true } : {}) }
-      : saleOnly
-        ? { isSale: true }
-        : undefined;
+  const where: Prisma.ProductWhereInput = { stockQuantity: { gt: 0 } };
+  if (ids) {
+    where.id = { in: ids.split(",").filter(Boolean) };
+  }
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+  if (saleOnly) {
+    where.isSale = true;
+  }
+  if (query) {
+    where.OR = [
+      { name: { contains: query, mode: "insensitive" } },
+      { description: { contains: query, mode: "insensitive" } },
+    ];
+  }
 
   const products = await prisma.product.findMany({
     where,

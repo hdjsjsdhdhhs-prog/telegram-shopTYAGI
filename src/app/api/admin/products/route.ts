@@ -16,6 +16,7 @@ const CreateBody = z.object({
   imageUrl: z.string().trim().max(2048).nullable().optional(),
   categoryId: z.string().trim().min(1),
   inStock: z.boolean().optional(),
+  stockQuantity: z.number().int().min(0).max(1_000_000_000).optional(),
 });
 
 export async function GET() {
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   if (!category) {
     return NextResponse.json({ error: "category_not_found" }, { status: 400 });
   }
+  const stockQuantity = parsed.data.stockQuantity ?? 0;
   const created = await prisma.product.create({
     data: {
       name: parsed.data.name,
@@ -56,7 +58,8 @@ export async function POST(req: Request) {
       isSale: parsed.data.isSale ?? false,
       currency: parsed.data.currency || "RUB",
       imageUrl: parsed.data.imageUrl || null,
-      inStock: parsed.data.inStock ?? true,
+      inStock: stockQuantity > 0,
+      stockQuantity,
       categoryId: parsed.data.categoryId,
     },
   });
