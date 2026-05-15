@@ -9,9 +9,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const url = new URL(req.url);
-  const status = url.searchParams.get("status");
+  const rawStatus = url.searchParams.get("status")?.toUpperCase();
+  const status =
+    rawStatus === "PENDING" || rawStatus === "COMPLETED" || rawStatus === "CANCELLED"
+      ? rawStatus
+      : null;
   const orders = await prisma.order.findMany({
-    where: status ? { status: status as "PENDING" | "COMPLETED" | "CANCELLED" } : undefined,
+    where: status ? { status } : undefined,
     orderBy: { createdAt: "desc" },
     include: { items: true, user: true },
     take: 200,

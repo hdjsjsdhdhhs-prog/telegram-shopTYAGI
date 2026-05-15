@@ -7,6 +7,7 @@ const UpdateBody = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().max(5000).nullable().optional(),
   price: z.number().int().min(0).max(100_000_000).optional(),
+  costPrice: z.number().int().min(0).max(100_000_000).optional(),
   oldPrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
   salePrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
   saleBadge: z.string().trim().max(40).nullable().optional(),

@@ -1,6 +1,3 @@
-// Telegram Mini App Storefront - Prisma schema
-// Docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,54 +8,96 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
-  telegramId  String    @unique
-  username    String?
-  firstName   String?
-  lastName    String?
-  photoUrl    String?
+  id           String     @id @default(cuid())
+  telegramId   String     @unique
+  username     String?
+  firstName    String?
+  lastName     String?
+  photoUrl     String?
   languageCode String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  orders      Order[]
-  favorites   Favorite[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  favorites    Favorite[]
+  orders       Order[]
 }
 
 model Category {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  slug      String   @unique
+  slug      String    @unique
   imageUrl  String?
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   products  Product[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String?
-  price       Int      // stored in minor units (cents/kopecks) for safety
-  oldPrice    Int?
-  salePrice   Int?
-  saleBadge   String?
-  isSale      Boolean  @default(false)
-  currency    String   @default("RUB")
+  price       Int
+  costPrice Int?
+  currency    String      @default("RUB")
   imageUrl    String?
-  inStock     Boolean  @default(true)
+  inStock     Boolean     @default(true)
   categoryId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  isSale      Boolean     @default(false)
+  oldPrice    Int?
+  saleBadge   String?
+  salePrice   Int?
   favorites   Favorite[]
+  orderItems  OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
   @@index([isSale])
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  userId         String
+  status         OrderStatus    @default(PENDING)
+  paymentMethod  PaymentMethod
+  deliveryMethod DeliveryMethod
+  address        String?
+  comment        String?
+  total          Int
+  currency       String         @default("RUB")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id])
+  items          OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  unitPrice   Int
+  quantity    Int
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
 }
 
 enum OrderStatus {
@@ -76,51 +115,4 @@ enum PaymentMethod {
 enum DeliveryMethod {
   COURIER
   PICKUP
-}
-
-model Order {
-  id              String          @id @default(cuid())
-  userId          String
-  status          OrderStatus     @default(PENDING)
-  paymentMethod   PaymentMethod
-  deliveryMethod  DeliveryMethod
-  address         String?
-  comment         String?
-  total           Int             // minor units, snapshot at order time
-  currency        String          @default("RUB")
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  user            User            @relation(fields: [userId], references: [id])
-  items           OrderItem[]
-
-  @@index([userId])
-  @@index([status])
-}
-
-model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  productId   String
-  productName String   // snapshot
-  unitPrice   Int      // snapshot, minor units
-  quantity    Int
-
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id])
-
-  @@index([orderId])
-}
-
-model Favorite {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@index([userId])
 }

@@ -3,9 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isAdminRequest } from "@/lib/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { calculateOrderFinancials } from "@/lib/profit";
 
 const Body = z.object({
-  status: z.enum(["PENDING", "COMPLETED", "CANCELLED"]),
+  status: z.preprocess(
+    (value) => (typeof value === "string" ? value.toUpperCase() : value),
+    z.enum(["PENDING", "COMPLETED", "CANCELLED"]),
+  ),
 });
 
 export async function PATCH(
@@ -21,11 +25,37 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
+  const current = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true },
+  });
+  if (!current) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const financials = calculateOrderFinancials(current.items);
+  const data =
+    parsed.data.status === "COMPLETED"
+      ? {
+          status: parsed.data.status,
+          revenue: financials.revenue,
+          cost: financials.cost,
+          profit: financials.profit,
+          completedAt: new Date(),
+        }
+      : {
+          status: parsed.data.status,
+          revenue: 0,
+          cost: 0,
+          profit: 0,
+          completedAt: null,
+        };
+
   let order;
   try {
     order = await prisma.order.update({
       where: { id },
-      data: { status: parsed.data.status },
+      data,
       include: { user: true },
     });
   } catch {

@@ -38,6 +38,7 @@ async function main() {
     {
       name: "HQD Cuvie Plus 1200",
       price: 99000,
+      costPrice: 52000,
       oldPrice: 119000,
       salePrice: 89000,
       saleBadge: "Sale",
@@ -49,6 +50,7 @@ async function main() {
     {
       name: "Elf Bar BC5000",
       price: 149000,
+      costPrice: 85000,
       category: "Одноразки",
       imageUrl: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=600&q=80",
       description: "Перезаряжаемый, до 5000 затяжек, аккумулятор 650 mAh.",
@@ -56,6 +58,7 @@ async function main() {
     {
       name: "Жидкость BLVK Cloud Salt 30ml",
       price: 79000,
+      costPrice: 42000,
       category: "Жидкости",
       imageUrl: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=600&q=80",
       description: "Соляной никотин 20 мг/мл, фруктовый микс.",
@@ -63,6 +66,7 @@ async function main() {
     {
       name: "Vaporesso XROS 3 Pod Kit",
       price: 269000,
+      costPrice: 180000,
       category: "Устройства",
       imageUrl: "https://images.unsplash.com/photo-1572635148818-ef6fd45eb394?auto=format&fit=crop&w=600&q=80",
       description: "Pod-система 1000 mAh с регулируемым обдувом.",
@@ -70,6 +74,7 @@ async function main() {
     {
       name: "Сменный картридж XROS 0.8Ω",
       price: 39000,
+      costPrice: 21000,
       category: "Аксессуары",
       imageUrl: "https://images.unsplash.com/photo-1604908554007-1e9bf2cb1c97?auto=format&fit=crop&w=600&q=80",
       description: "Сменный pod-картридж 2 ml, сопротивление 0.8 Ом.",
@@ -77,6 +82,7 @@ async function main() {
     {
       name: "Зарядка Type-C 1A",
       price: 19000,
+      costPrice: 9000,
       category: "Аксессуары",
       imageUrl: "https://images.unsplash.com/photo-1583225154070-ddc70778e3d5?auto=format&fit=crop&w=600&q=80",
       description: "Универсальный кабель для зарядки.",
@@ -93,6 +99,7 @@ async function main() {
         name: p.name,
         description: p.description,
         price: p.price,
+        costPrice: p.costPrice,
         oldPrice: p.oldPrice ?? null,
         salePrice: p.salePrice ?? null,
         saleBadge: p.saleBadge ?? null,

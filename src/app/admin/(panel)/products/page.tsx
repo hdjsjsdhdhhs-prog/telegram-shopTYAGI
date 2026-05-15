@@ -14,6 +14,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  costPrice: number;
   oldPrice: number | null;
   salePrice: number | null;
   saleBadge: string | null;
@@ -89,7 +90,9 @@ export default function AdminProductsPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[color:var(--tg-text-muted)]">
                     <span>{p.category?.name ?? "—"}</span>
                     <span>·</span>
-                    <span>{formatPrice(getProductDisplayPrice(p), p.currency)}</span>
+                    <span>продажа {formatPrice(getProductDisplayPrice(p), p.currency)}</span>
+                    <span>·</span>
+                    <span>себестоимость {formatPrice(p.costPrice, p.currency)}</span>
                     {oldPrice ? <span className="line-through">{formatPrice(oldPrice, p.currency)}</span> : null}
                     {p.isSale ? (
                       <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-medium text-rose-300">
@@ -143,6 +146,9 @@ function ProductEditor({
   const [priceMajor, setPriceMajor] = useState(
     initial ? (initial.price / 100).toString() : "",
   );
+  const [costPriceMajor, setCostPriceMajor] = useState(
+    initial ? (initial.costPrice / 100).toString() : "",
+  );
   const [oldPriceMajor, setOldPriceMajor] = useState(
     initial?.oldPrice != null ? (initial.oldPrice / 100).toString() : "",
   );
@@ -177,6 +183,11 @@ function ProductEditor({
       setError("Некорректная цена");
       return;
     }
+    const costPriceNumber = Math.round(Number(costPriceMajor) * 100);
+    if (!Number.isFinite(costPriceNumber) || costPriceNumber < 0) {
+      setError("Некорректная себестоимость");
+      return;
+    }
     let oldPriceNumber: number | null = null;
     let salePriceNumber: number | null = null;
     try {
@@ -204,6 +215,7 @@ function ProductEditor({
           name,
           description: description || null,
           price: priceNumber,
+          costPrice: costPriceNumber,
           oldPrice: oldPriceNumber,
           salePrice: salePriceNumber,
           saleBadge: saleBadge.trim() || null,
@@ -252,7 +264,7 @@ function ProductEditor({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Цена">
+          <Field label="Customer sale price / Цена продажи">
             <input
               className="input"
               type="number"
@@ -263,7 +275,19 @@ function ProductEditor({
               onChange={(e) => setPriceMajor(e.target.value)}
             />
           </Field>
-          <Field label="Валюта">
+          <Field label="Product cost price / Себестоимость">
+            <input
+              className="input"
+              type="number"
+              min={0}
+              step="0.01"
+              required
+              value={costPriceMajor}
+              onChange={(e) => setCostPriceMajor(e.target.value)}
+            />
+          </Field>
+        </div>
+        <Field label="Валюта">
             <select
               className="input"
               value={currency}
@@ -273,8 +297,7 @@ function ProductEditor({
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </select>
-          </Field>
-        </div>
+        </Field>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--tg-bg-3)] px-3 py-3">
           <span>
             <span className="block text-sm">Sale / Распродажа</span>

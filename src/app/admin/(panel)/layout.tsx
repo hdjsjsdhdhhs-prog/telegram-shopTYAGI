@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NavLink href="/admin/categories">Категории</NavLink>
           <NavLink href="/admin/products">Товары</NavLink>
           <NavLink href="/admin/orders">Заказы</NavLink>
+          <NavLink href="/admin/analytics">Аналитика</NavLink>
         </nav>
         <form action="/api/admin/logout" method="POST" className="px-3 pb-4">
           <button className="btn-secondary w-full">Выйти</button>
@@ -20,11 +21,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="md:pl-64">
         <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">{children}</div>
         <nav className="md:hidden sticky bottom-0 inset-x-0 z-30 border-t border-white/5 bg-[color:var(--tg-bg-2)]/95 backdrop-blur">
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-5">
             <MobileLink href="/admin">Главная</MobileLink>
             <MobileLink href="/admin/categories">Категории</MobileLink>
             <MobileLink href="/admin/products">Товары</MobileLink>
             <MobileLink href="/admin/orders">Заказы</MobileLink>
+            <MobileLink href="/admin/analytics">Аналитика</MobileLink>
           </div>
         </nav>
       </div>

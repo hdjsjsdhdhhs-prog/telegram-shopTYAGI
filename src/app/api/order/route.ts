@@ -61,6 +61,8 @@ export async function POST(req: Request) {
         productId: p.id,
         productName: p.name,
         unitPrice,
+        unitSalePrice: unitPrice,
+        unitCostPrice: p.costPrice,
         quantity: i.quantity,
       };
     })
@@ -68,6 +70,8 @@ export async function POST(req: Request) {
     productId: string;
     productName: string;
     unitPrice: number;
+    unitSalePrice: number;
+    unitCostPrice: number;
     quantity: number;
   }[];
 

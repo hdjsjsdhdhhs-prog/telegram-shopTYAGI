@@ -5,6 +5,19 @@ import { getProductDisplayPrice } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
+const cartProductSelect = {
+  id: true,
+  name: true,
+  price: true,
+  oldPrice: true,
+  salePrice: true,
+  saleBadge: true,
+  isSale: true,
+  currency: true,
+  imageUrl: true,
+  inStock: true,
+};
+
 const Body = z.object({
   ids: z.array(z.string().min(1)).min(1).max(100),
 });
@@ -23,6 +36,7 @@ export async function POST(req: Request) {
   }
   const products = await prisma.product.findMany({
     where: { id: { in: parsed.data.ids } },
+    select: cartProductSelect,
   });
   return NextResponse.json({
     products: products.map((product) => ({

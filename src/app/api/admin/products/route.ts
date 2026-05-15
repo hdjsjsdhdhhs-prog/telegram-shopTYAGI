@@ -7,6 +7,7 @@ const CreateBody = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(5000).nullable().optional(),
   price: z.number().int().min(0).max(100_000_000), // minor units
+  costPrice: z.number().int().min(0).max(100_000_000).optional(),
   oldPrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
   salePrice: z.number().int().min(0).max(100_000_000).nullable().optional(),
   saleBadge: z.string().trim().max(40).nullable().optional(),
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       name: parsed.data.name,
       description: parsed.data.description ?? null,
       price: parsed.data.price,
+      costPrice: parsed.data.costPrice ?? 0,
       oldPrice: parsed.data.oldPrice ?? null,
       salePrice: parsed.data.salePrice ?? null,
       saleBadge: parsed.data.saleBadge || null,

@@ -16,7 +16,7 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
-  },
+  },Ы
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@vercel/blob": "^2.3.3",
