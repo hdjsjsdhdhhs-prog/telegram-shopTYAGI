@@ -178,7 +178,7 @@ export async function GET(req: Request) {
 
   const completedOrders = await prisma.order.findMany({
     where: { status: "COMPLETED" },
-    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ createdAt: "desc" }],
     include: {
       user: {
         select: {
