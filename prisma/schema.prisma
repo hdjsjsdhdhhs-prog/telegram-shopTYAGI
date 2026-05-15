@@ -33,24 +33,24 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  price       Int
-  costPrice Int?
-  currency    String      @default("RUB")
-  imageUrl    String?
-  inStock     Boolean     @default(true)
-  categoryId  String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  isSale      Boolean     @default(false)
+  price       Int      // stored in minor units (cents/kopecks) for safety
   oldPrice    Int?
-  saleBadge   String?
   salePrice   Int?
-  favorites   Favorite[]
-  orderItems  OrderItem[]
+  saleBadge   String?
+  isSale      Boolean  @default(false)
+  currency    String   @default("RUB")
+  imageUrl    String?
+  inStock     Boolean  @default(true)
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  favorites   Favorite[]
 
   @@index([categoryId])
   @@index([isSale])
