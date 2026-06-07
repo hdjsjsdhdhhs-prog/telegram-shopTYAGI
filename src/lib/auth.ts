@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { ADMIN_COOKIE, ADMIN_SESSION_TTL_SECONDS } from "@/lib/adminSession";
 
-export const ADMIN_COOKIE = "tg_admin_session";
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+export { ADMIN_COOKIE } from "@/lib/adminSession";
 
 function secret(): Uint8Array {
   const s = process.env.ADMIN_SESSION_SECRET;
@@ -18,7 +18,7 @@ export async function createAdminSession(): Promise<string> {
   return await new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
+    .setExpirationTime(`${ADMIN_SESSION_TTL_SECONDS}s`)
     .sign(secret());
 }
 
@@ -44,6 +44,6 @@ export function adminCookieOptions() {
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge: ADMIN_SESSION_TTL_SECONDS,
   };
 }
