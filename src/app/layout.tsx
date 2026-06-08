@@ -26,7 +26,7 @@ export default function RootLayout({
       <body className="bg-[color:var(--tg-bg)] text-[color:var(--tg-text)]">
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
         <Providers>{children}</Providers>
       </body>
