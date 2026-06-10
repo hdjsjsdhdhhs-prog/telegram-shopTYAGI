@@ -21,15 +21,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="ru" className="dark">
-      <body className="bg-[color:var(--tg-bg)] text-[color:var(--tg-text)]">
-        <Script
-          src="https://telegram.org/js/telegram-web-app.js"
-          strategy="afterInteractive"
-        />
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
-}
+return (
+  <html lang="ru" className="dark">
+    <body className="bg-[color:var(--tg-bg)] text-[color:var(--tg-text)]">
+      {/*
+      <Script
+        src="https://telegram.org/js/telegram-web-app.js"
+        strategy="afterInteractive"
+      />
+      */}
+      <Providers>{children}</Providers>
+    </body>
+  </html>
+);
