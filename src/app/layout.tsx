@@ -33,4 +33,4 @@ return (
       <Providers>{children}</Providers>
     </body>
   </html>
-);
+)
